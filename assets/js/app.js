@@ -1,9 +1,8 @@
-// @TODO: YOUR CODE HERE!
 
 // set the dimensions and margins of the graph
-var margin = {top: 10, right: 30, bottom: 30, left: 60},
+var margin = {top: 10, right: 30, bottom: 80, left: 60},
     width = 460 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+    height = 500 - margin.top - margin.bottom;
 
 // append the svg object to the body of the page
 var svg = d3.select("#scatter")
@@ -14,7 +13,21 @@ var svg = d3.select("#scatter")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
+function test(number) {
+  console.log("it worked" + number);
+  return;
+}
 
+function config_xaxis(x,xstart,xstop) {
+  // new X axis
+  x.domain([xstart, xstop])
+
+  svg.select(".myXaxis")
+    .transition()
+    .duration(2000)
+    .attr("opacity", "1")
+    .call(d3.axisBottom(x));  
+  }
 
 //Read the data
 //d3.csv("assets/data/data.csv", function(data) {
@@ -61,20 +74,30 @@ svg.append("g")
       .style("opacity", 0)
   }
 
-    svg.append("g")
-    .selectAll("dot")
+var dot =  svg.selectAll("dot")
     .data(data)
     .enter()
-    .append("circle")
-    .attr("cx", function(d) { return x(d.healthcare); })
-    .attr("cy", function(d) { return y(d.poverty); })
-    .text(function(d) { return d.abbr})
-    .attr("r", 2)
-    .style("fill", "#69b3a2")
-    .on("mouseover", mouseover )
-    .on("mousemove", mousemove )
-    .on("mouseleave", mouseleave );
+    .append("g")
+    .attr("class","elements");
 
+  dot.append("circle")
+      .attr("cx", function(d) { return x(d.healthcare); })
+      .attr("cy", function(d) { return y(d.poverty); })
+      .attr("r", 2)
+      .style("fill", "#69b3a2")
+      .on("mouseover", mouseover )
+      .on("mousemove", mousemove )
+      .on("mouseleave", mouseleave )
+
+  dot.append("text")
+      .attr("class","circle-text")
+      .attr("text-anchor", "middle")
+      .text(function(d) { return d.abbr})
+      .style("opacity",0)
+      .style("font-size","10")
+      .style("stroke","none")
+      .attr("dx", function(d) { return x(d.healthcare); })
+      .attr("dy", function(d) { return y(d.poverty); });
 
   // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
   // Its opacity is set to 0: we don't see it by default.
@@ -88,29 +111,76 @@ svg.append("g")
     .style("border-radius", "5px")
     .style("padding", "10px")
 
-    
-    // new X axis
-    x.domain([0, 30])
-    svg.select(".myXaxis")
-      .transition()
-      .duration(2000)
-      .attr("opacity", "1")
-      .call(d3.axisBottom(x));  
+
+    config_xaxis(x,0,30);
+
+    var xlab = [{"label":"% Healthcare",
+                  "class": "active"},
+                  {"label":"% Smokes",
+                  "class": "inactive"},
+                  {"label":"Obese",
+                  "class": "inactive"}]
 
     // Add X axis label:
-    svg.append("text")
-    .attr("text-anchor", "end")
+    var xlabels =  svg.selectAll("dot")
+                  .append("g")
+                  .attr("class","elements")
+                  .data(xlab)
+                  .enter();
+
+  xlabels.append("rect")
+        .attr("height",20)
+//        .attr("class","inactive active")
+        .attr("width", 120)
+        .attr("x", (width - margin.left - margin.right) / 2)
+        .attr("y", function(d,i) { return height  + 5 + margin.top + i *20 })
+        .style("fill","none")
+        .on('click', function(d, i) {
+          d3.select('.status')
+            .text('You clicked on circle ' + i);
+        });
+      ;
+  
+    
+  xlabels.append("text")
+    .attr("class",function(d) { return d.class })
+    .attr("text-anchor", "middle")
     .attr("x", width / 2)
-    .attr("y", height + margin.top + 20)
-    .text("% Healthcare");
+    .attr("y", function(d,i) { return height+ 20 + margin.top + i * 20 })
+    .text(function(d) {return d.label;});
+
+//     // Add X axis label2:
+//     svg.append("text")
+//     .attr("class","inactive")
+//     .attr("text-anchor", "middle")
+//     .attr("x", width / 2)
+//     .attr("y", height + margin.top + 35)
+//     .text("% Smokes")
+//     .on("click", function(d) { return '.attr("class", "active")'});
+
+//     // Add X axis label3:
+//     svg.append("text")
+//     .attr("class","inactive")
+//     .attr("text-anchor", "middle")
+//     .attr("x", width / 2)
+//     .attr("y", height + margin.top + 50)
+//     .text("Obese")
+//  //   .on("click", function(){return()});
 
     // Y axis label:
     svg.append("text")
-    .attr("text-anchor", "end")
+    .attr("text-anchor", "middle")
     .attr("transform", "rotate(-90)")
     .attr("y", -margin.left+20)
     .attr("x", -height / 2)
     .text("% Poverty")
+
+
+  xlabels.selectAll('rect')
+  .on('click', function(d, i) {
+    d3.select('.status')
+      .text('You clicked on circle ' + i);
+  });
 
     //show the dots in the right spot
     svg.selectAll("circle")
@@ -121,9 +191,17 @@ svg.append("g")
       .attr("cy", function(d) { return y(d.poverty); })
       .attr("r", 10)
       .style("fill", "#69b3a2")
-      .text(function(d) { return d.abbr})
       .style("opacity", 0.3)
-      .style("stroke", "white")
+      .style("stroke", "white");
+    
+    dot.selectAll("text")
+      .style("opacity",0.6)
+      .style("font-size","8")
+      .style("stroke","#69b3a2")
+      .attr("dx", function(d) { return x(d.healthcare); })
+      .attr("dy", function(d) { return y(d.poverty); });
+
+
 
 
     });
